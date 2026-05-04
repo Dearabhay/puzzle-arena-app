@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Puzzle Arena – Battle of Minds</title>
+  <meta name="description" content="Puzzle Arena – The ultimate puzzle battle game. Solve puzzles, challenge rivals, and climb the leaderboard. Available on Android."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0b1e;
+      --bg2: #13102d;
+      --accent1: #ff5cf0;
+      --accent2: #5cf0ff;
+      --accent3: #ffe94d;
+      --accent4: #7c5cfc;
+      --text: #f0ecff;
+      --muted: #9d96c0;
+      --card: rgba(255,255,255,0.05);
+      --glow1: rgba(255,92,240,0.35);
+      --glow2: rgba(92,240,255,0.25);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 999; opacity: .6;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 6%;
+      background: rgba(13,11,30,0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .nav-logo {
+      font-family: 'Boogaloo', cursive;
+      font-size: 1.8rem;
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: 1px;
+    }
+    .nav-links { display: flex; gap: 32px; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none; font-weight: 700; font-size: .95rem;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--accent2); }
+    .nav-cta {
+      background: linear-gradient(135deg, var(--accent4), var(--accent1));
+      color: #fff; font-weight: 800; font-size: .9rem;
+      padding: 10px 22px; border-radius: 50px; text-decoration: none;
+      box-shadow: 0 0 20px var(--glow1);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 0 32px var(--glow1); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 120px 6% 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Floating orbs */
+    .orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(80px); pointer-events: none;
+      animation: floatOrb 8s ease-in-out infinite alternate;
+    }
+    .orb1 { width: 500px; height: 500px; background: var(--glow1); top: -120px; left: -150px; }
+    .orb2 { width: 400px; height: 400px; background: var(--glow2); bottom: -100px; right: -100px; animation-delay: -4s; }
+    .orb3 { width: 300px; height: 300px; background: rgba(124,92,252,0.2); top: 40%; left: 50%; animation-delay: -2s; }
+
+    @keyframes floatOrb {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(30px, 40px) scale(1.1); }
+    }
+
+    /* Puzzle tiles floating */
+    .tile {
+      position: absolute; border-radius: 14px;
+      opacity: .15; pointer-events: none;
+      animation: tileFloat linear infinite;
+    }
+    @keyframes tileFloat {
+      0%   { transform: translateY(110vh) rotate(0deg); }
+      100% { transform: translateY(-20vh) rotate(360deg); }
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(92,240,255,0.1); border: 1px solid rgba(92,240,255,0.3);
+      color: var(--accent2); font-weight: 700; font-size: .85rem;
+      padding: 6px 16px; border-radius: 50px;
+      margin-bottom: 28px;
+      animation: fadeUp .8s ease both;
+    }
+    .hero-badge span { width: 8px; height: 8px; border-radius: 50%; background: var(--accent2);
+      animation: pulse 1.5s ease infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .5; transform: scale(1.5); }
+    }
+
+    h1 {
+      font-family: 'Boogaloo', cursive;
+      font-size: clamp(3.5rem, 9vw, 7rem);
+      line-height: 1.05;
+      animation: fadeUp .9s .1s ease both;
+    }
+    h1 .line1 { display: block; color: var(--text); }
+    h1 .line2 {
+      display: block;
+      background: linear-gradient(90deg, var(--accent1) 0%, var(--accent3) 50%, var(--accent2) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-size: 200%; animation: gradShift 4s ease infinite, fadeUp .9s .1s ease both;
+    }
+    @keyframes gradShift {
+      0%, 100% { background-position: 0%; }
+      50%       { background-position: 100%; }
+    }
+
+    .hero-sub {
+      max-width: 560px; font-size: 1.15rem; color: var(--muted); font-weight: 600;
+      margin: 22px auto 40px;
+      animation: fadeUp .9s .2s ease both;
+    }
+
+    .hero-btns {
+      display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+      animation: fadeUp .9s .35s ease both;
+    }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: linear-gradient(135deg, var(--accent4), var(--accent1));
+      color: #fff; font-weight: 800; font-size: 1.05rem;
+      padding: 15px 32px; border-radius: 50px; text-decoration: none;
+      box-shadow: 0 8px 40px var(--glow1);
+      transition: transform .25s, box-shadow .25s;
+    }
+    .btn-primary:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 12px 56px var(--glow1); }
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: transparent; border: 2px solid rgba(255,255,255,0.2);
+      color: var(--text); font-weight: 800; font-size: 1.05rem;
+      padding: 15px 32px; border-radius: 50px; text-decoration: none;
+      transition: border-color .25s, background .25s;
+    }
+    .btn-secondary:hover { border-color: var(--accent2); background: rgba(92,240,255,0.08); }
+
+    .hero-stats {
+      display: flex; gap: 48px; justify-content: center; margin-top: 64px; flex-wrap: wrap;
+      animation: fadeUp .9s .5s ease both;
+    }
+    .stat { text-align: center; }
+    .stat-num {
+      font-family: 'Boogaloo', cursive; font-size: 2.4rem;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .stat-label { color: var(--muted); font-size: .85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(28px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── SECTION COMMON ── */
+    section { padding: 100px 6%; }
+    .section-tag {
+      display: inline-block;
+      font-size: .8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;
+      color: var(--accent2); margin-bottom: 14px;
+    }
+    .section-title {
+      font-family: 'Boogaloo', cursive;
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.1; margin-bottom: 16px;
+    }
+    .section-sub { color: var(--muted); font-size: 1.05rem; max-width: 560px; font-weight: 600; }
+
+    /* ── FEATURES ── */
+    #features { background: var(--bg2); }
+    .features-header { text-align: center; margin-bottom: 64px; }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px; max-width: 1100px; margin: 0 auto;
+    }
+    .feature-card {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 24px; padding: 36px 28px;
+      position: relative; overflow: hidden;
+      transition: transform .3s, border-color .3s;
+    }
+    .feature-card:hover { transform: translateY(-6px); border-color: var(--accent4); }
+    .feature-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--accent4), var(--accent1));
+      opacity: 0; transition: opacity .3s;
+    }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-icon {
+      font-size: 2.6rem; margin-bottom: 18px;
+      display: block;
+      filter: drop-shadow(0 0 12px var(--glow1));
+    }
+    .feature-title { font-family: 'Boogaloo', cursive; font-size: 1.5rem; margin-bottom: 10px; }
+    .feature-desc { color: var(--muted); font-size: .95rem; line-height: 1.7; font-weight: 600; }
+
+    /* ── HOW TO PLAY ── */
+    #how {
+      max-width: 1100px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
+    }
+    .steps { list-style: none; display: flex; flex-direction: column; gap: 28px; }
+    .step { display: flex; gap: 20px; align-items: flex-start; }
+    .step-num {
+      min-width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent4), var(--accent1));
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Boogaloo', cursive; font-size: 1.3rem;
+      box-shadow: 0 4px 20px var(--glow1);
+    }
+    .step-body h4 { font-family: 'Boogaloo', cursive; font-size: 1.3rem; margin-bottom: 6px; }
+    .step-body p  { color: var(--muted); font-size: .95rem; line-height: 1.6; font-weight: 600; }
+
+    .phone-mock {
+      position: relative; width: 280px; margin: 0 auto;
+    }
+    .phone-outer {
+      width: 280px; height: 560px; border-radius: 42px;
+      border: 8px solid rgba(255,255,255,0.12);
+      background: linear-gradient(160deg, #1a1535, #0d0b1e);
+      position: relative; overflow: hidden;
+      box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 60px var(--glow2), inset 0 0 0 1px rgba(255,255,255,.06);
+    }
+    .phone-screen {
+      position: absolute; inset: 12px;
+      background: linear-gradient(160deg, #1f1a42, #0f0d22);
+      border-radius: 34px; overflow: hidden;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .puzzle-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 6px; padding: 20px;
+    }
+    .pz {
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      animation: popIn .4s ease both;
+    }
+    @keyframes popIn {
+      from { transform: scale(0); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    .pz.c1 { background: rgba(255,92,240,.25); border: 2px solid rgba(255,92,240,.5); }
+    .pz.c2 { background: rgba(92,240,255,.25); border: 2px solid rgba(92,240,255,.5); }
+    .pz.c3 { background: rgba(255,233,77,.25); border: 2px solid rgba(255,233,77,.5); }
+    .pz.c4 { background: rgba(124,92,252,.25); border: 2px solid rgba(124,92,252,.5); }
+    .screen-score { font-family: 'Boogaloo', cursive; font-size: 2rem; margin-bottom: 8px; }
+    .screen-label { color: var(--muted); font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* ── SCREENSHOTS / GALLERY ── */
+    #gallery { background: var(--bg2); text-align: center; }
+    .gallery-scroll {
+      display: flex; gap: 20px; overflow-x: auto;
+      padding: 16px 0 24px; scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+    .gallery-scroll::-webkit-scrollbar { height: 4px; }
+    .gallery-scroll::-webkit-scrollbar-thumb { background: var(--accent4); border-radius: 4px; }
+    .gallery-card {
+      min-width: 200px; height: 360px; border-radius: 24px; flex-shrink: 0;
+      scroll-snap-align: start;
+      background: linear-gradient(160deg, var(--bg2), var(--bg));
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-size: 3rem;
+      transition: transform .3s;
+    }
+    .gallery-card:hover { transform: scale(1.04); }
+    .gallery-card p { font-size: .85rem; color: var(--muted); font-weight: 700; margin-top: 12px; }
+
+    /* ── DOWNLOAD ── */
+    #download {
+      text-align: center; position: relative; overflow: hidden;
+      background: radial-gradient(ellipse 80% 60% at 50% 100%, rgba(124,92,252,0.3) 0%, transparent 70%),
+                  var(--bg);
+    }
+    #download .section-title { font-size: clamp(2.5rem, 5vw, 4rem); }
+    .download-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 40px; }
+    .store-btn {
+      display: inline-flex; align-items: center; gap: 12px;
+      background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.15);
+      color: var(--text); font-weight: 700; font-size: 1rem;
+      padding: 14px 28px; border-radius: 16px; text-decoration: none;
+      transition: background .25s, border-color .25s, transform .25s;
+    }
+    .store-btn:hover { background: rgba(255,255,255,0.1); border-color: var(--accent2); transform: translateY(-2px); }
+    .store-btn .store-icon { font-size: 1.8rem; }
+    .store-btn small { display: block; font-size: .7rem; color: var(--muted); font-weight: 600; }
+    .store-btn strong { display: block; font-size: 1rem; }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 48px 6% 32px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: gap;
+      gap: 24px;
+    }
+    .footer-logo {
+      font-family: 'Boogaloo', cursive; font-size: 1.6rem;
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .footer-links { display: flex; gap: 24px; flex-wrap: wrap; }
+    .footer-links a { color: var(--muted); text-decoration: none; font-size: .9rem; font-weight: 600; transition: color .2s; }
+    .footer-links a:hover { color: var(--text); }
+    .footer-copy { color: var(--muted); font-size: .85rem; font-weight: 600; }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal { opacity: 0; transform: translateY(30px); transition: opacity .7s ease, transform .7s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      #how { grid-template-columns: 1fr; }
+      .phone-mock { display: none; }
+      footer { flex-direction: column; align-items: flex-start; }
+      .hero-stats { gap: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">🧩 Puzzle Arena</div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how">How to Play</a>
+      <a href="#download">Download</a>
+    </div>
+    <a href="#download" class="nav-cta">Play Now ↗</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+
+    <!-- Floating tiles -->
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const colors = ['#ff5cf0','#5cf0ff','#ffe94d','#7c5cfc','#ff9d5c'];
+        const emojis = ['🧩','⭐','🔷','🔶','💎','🔮','⚡','🎯'];
+        for(let i = 0; i < 12; i++) {
+          const t = document.createElement('div');
+          t.className = 'tile';
+          t.innerHTML = emojis[i % emojis.length];
+          const size = 30 + Math.random() * 40;
+          t.style.cssText = `
+            width:${size}px;height:${size}px;
+            left:${Math.random()*100}vw;
+            font-size:${size * .6}px;
+            text-align:center;line-height:${size}px;
+            animation-duration:${12 + Math.random()*18}s;
+            animation-delay:-${Math.random()*20}s;
+            background: ${colors[i % colors.length]}22;
+            border: 1px solid ${colors[i % colors.length]}44;
+          `;
+          document.querySelector('.hero').appendChild(t);
+        }
+      });
+    </script>
+
+    <div class="hero-badge"><span></span> Now Available on Android</div>
+
+    <h1>
+      <span class="line1">Battle of</span>
+      <span class="line2">Brilliant Minds</span>
+    </h1>
+
+    <p class="hero-sub">
+      Solve mind-bending puzzles, challenge real players worldwide, and prove you're the ultimate Puzzle Arena champion.
+    </p>
+
+    <div class="hero-btns">
+      <a href="https://play.google.com/store/apps/details?id=com.puzzlearena.puzzle" class="btn-primary">
+        🎮 Download Free
+      </a>
+      <a href="#features" class="btn-secondary">
+        ✨ Explore Features
+      </a>
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-num">50K+</div>
+        <div class="stat-label">Downloads</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">4.8★</div>
+        <div class="stat-label">Rating</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">500+</div>
+        <div class="stat-label">Levels</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">10K+</div>
+        <div class="stat-label">Active Players</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="features-header reveal">
+      <div class="section-tag">Why Players Love It</div>
+      <h2 class="section-title">Everything a puzzle lover needs</h2>
+      <p class="section-sub">From casual brain teasers to competitive ranked matches — Puzzle Arena has it all.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <span class="feature-icon">🧩</span>
+        <h3 class="feature-title">500+ Unique Puzzles</h3>
+        <p class="feature-desc">Hundreds of handcrafted levels across multiple puzzle types — from logic grids to word chains. New packs added every week.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">⚔️</span>
+        <h3 class="feature-title">Live PvP Battles</h3>
+        <p class="feature-desc">Race against real players in real-time. First to solve wins the round. Climb the global leaderboard and earn exclusive rewards.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">🏆</span>
+        <h3 class="feature-title">Ranked Seasons</h3>
+        <p class="feature-desc">Seasonal tournaments with exclusive prizes. Earn trophies, badges, and cosmetics as you rise through the ranks.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">🎨</span>
+        <h3 class="feature-title">Stunning Themes</h3>
+        <p class="feature-desc">Unlock gorgeous board themes, animated backgrounds, and custom puzzle skins to personalise your arena.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">🌍</span>
+        <h3 class="feature-title">Global Leaderboards</h3>
+        <p class="feature-desc">Compete with players from 80+ countries. Filter by region, friends, or global to see where you stand.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">⚡</span>
+        <h3 class="feature-title">Daily Challenges</h3>
+        <p class="feature-desc">A fresh puzzle every day. Complete the daily challenge to earn streak bonuses and limited-time rewards.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW TO PLAY -->
+  <section style="padding: 100px 6%;">
+    <div id="how">
+      <div>
+        <div class="section-tag reveal">How It Works</div>
+        <h2 class="section-title reveal">Start playing in seconds</h2>
+        <p class="section-sub reveal">Jump straight into the action — no tutorial required. But if you want to go pro, we've got guides for that too.</p>
+        <ul class="steps" style="margin-top: 40px;">
+          <li class="step reveal">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>Download the App</h4>
+              <p>Free on Google Play. No subscription required. Jump in and play immediately.</p>
+            </div>
+          </li>
+          <li class="step reveal">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>Pick Your Mode</h4>
+              <p>Solo campaigns, daily challenges, or live PvP. Choose your battlefield.</p>
+            </div>
+          </li>
+          <li class="step reveal">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>Solve & Conquer</h4>
+              <p>Use logic, speed, and creativity to solve puzzles faster than your opponent.</p>
+            </div>
+          </li>
+          <li class="step reveal">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <h4>Rank Up & Earn</h4>
+              <p>Win matches to earn coins, trophies, and exclusive cosmetic rewards.</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="phone-mock reveal">
+        <div class="phone-outer">
+          <div class="phone-screen">
+            <div class="screen-label">Your Score</div>
+            <div class="screen-score" id="scoreDisplay">0</div>
+            <div class="puzzle-grid" id="puzzleGrid"></div>
+            <div class="screen-label" style="margin-top:8px;">Tap to Solve!</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GALLERY -->
+  <section id="gallery">
+    <div class="reveal" style="margin-bottom:40px;">
+      <div class="section-tag">Game Modes</div>
+      <h2 class="section-title">A mode for every mood</h2>
+    </div>
+    <div class="gallery-scroll">
+      <div class="gallery-card">🧩<p>Classic Puzzle</p></div>
+      <div class="gallery-card">⚔️<p>PvP Battle</p></div>
+      <div class="gallery-card">⏱️<p>Speed Run</p></div>
+      <div class="gallery-card">🌙<p>Zen Mode</p></div>
+      <div class="gallery-card">🏆<p>Tournament</p></div>
+      <div class="gallery-card">📅<p>Daily Challenge</p></div>
+    </div>
+  </section>
+
+  <!-- DOWNLOAD -->
+  <section id="download">
+    <div class="reveal">
+      <div class="section-tag">Get the Game</div>
+      <h2 class="section-title">Your next obsession awaits</h2>
+      <p class="section-sub" style="margin: 0 auto;">Free to play. Available right now on Android. Join thousands of puzzle lovers worldwide.</p>
+    </div>
+    <div class="download-btns reveal">
+      <a href="https://play.google.com/store/apps/details?id=com.puzzlearena.puzzle" class="store-btn">
+        <span class="store-icon">▶</span>
+        <div>
+          <small>GET IT ON</small>
+          <strong>Google Play</strong>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">🧩 Puzzle Arena</div>
+    <div class="footer-links">
+      <a href="/privacy-policy.html">Privacy Policy</a>
+      <a href="/terms.html">Terms of Use</a>
+      <a href="mailto:support@puzzlearena.puzzle">Contact</a>
+      <a href="/app-ads.txt">app-ads.txt</a>
+    </div>
+    <div class="footer-copy">© 2026 Puzzle Arena. All rights reserved.</div>
+  </footer>
+
+  <script>
+    // ── Scroll reveal ──
+    const revealEls = document.querySelectorAll('.reveal');
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e, i) => {
+        if (e.isIntersecting) {
+          setTimeout(() => e.target.classList.add('visible'), i * 80);
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    revealEls.forEach(el => io.observe(el));
+
+    // ── Interactive phone mock ──
+    const emojis  = ['🔴','🔵','🟡','🟢','🔷','🔶','💜','🟠'];
+    const colors  = ['c1','c2','c3','c4','c1','c2','c3','c4',
+                     'c3','c4','c1','c2','c2','c3','c4','c1'];
+    const grid    = document.getElementById('puzzleGrid');
+    const display = document.getElementById('scoreDisplay');
+    let score = 0;
+
+    function buildGrid() {
+      grid.innerHTML = '';
+      for (let i = 0; i < 16; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'pz ' + colors[i];
+        cell.style.animationDelay = (i * 0.05) + 's';
+        cell.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        cell.addEventListener('click', () => {
+          cell.style.transform = 'scale(0)';
+          cell.style.transition = 'transform .2s';
+          score += 10;
+          display.textContent = score;
+          setTimeout(() => {
+            cell.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            cell.style.transform = 'scale(1)';
+          }, 200);
+        });
+        grid.appendChild(cell);
+      }
+    }
+    buildGrid();
+  </script>
+</body>
+</html>
