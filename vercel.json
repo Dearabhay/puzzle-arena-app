@@ -1,4 +1,5 @@
 {
+  "outputDirectory": ".",
   "rewrites": [
     { "source": "/app-ads.txt", "destination": "/public/app-ads.txt" }
   ],
@@ -6,8 +7,7 @@
     {
       "source": "/app-ads.txt",
       "headers": [
-        { "key": "Content-Type", "value": "text/plain" },
-        { "key": "Cache-Control", "value": "public, max-age=3600" }
+        { "key": "Content-Type", "value": "text/plain" }
       ]
     }
   ]
